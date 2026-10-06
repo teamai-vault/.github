@@ -6,8 +6,9 @@
     <a href="#zh-cn">简体中文</a>
   </p>
   <p>
-    <a href="https://github.com/teamai-vault/teamai-cli-customization">team-ai CLI</a> ·
-    <a href="https://github.com/teamai-vault/teamai-marketplace">Plugin Marketplace</a>
+    <a href="https://github.com/teamai-vault/teamai-cli-copilot">teamai CLI</a> ·
+    <a href="https://github.com/teamai-vault/teamai-marketplace">Marketplace</a> ·
+    <a href="https://teamai-vault.github.io/teamai-cli-copilot/">Docs site</a>
   </p>
 </div>
 
@@ -15,66 +16,75 @@
 
 ## English
 
-Team AI is a lightweight control layer for teams building with GitHub Copilot. It standardizes shared capabilities without introducing a second agent runtime, a custom plugin format, or an IDE-specific integration layer.
+Team AI is a thin control layer for teams building with GitHub Copilot. A department keeps its shared Plugins, instructions, Skills, business context, and Learnings in one Git Marketplace; the `teamai` CLI converges them onto each engineer's machine and business repositories. It adds no second agent runtime, no custom plugin format, and no IDE-specific layer.
 
 ### Start here
 
 | Goal | Repository |
 | --- | --- |
-| Bootstrap a machine, select a role, sync shared plugins, and diagnose state | [teamai-cli-customization](https://github.com/teamai-vault/teamai-cli-customization) |
-| Browse and validate reusable Copilot Agent Plugins | [teamai-marketplace](https://github.com/teamai-vault/teamai-marketplace) |
+| Install the `teamai` CLI: initialize, bind a repository, sync, recall, contribute, diagnose | [teamai-cli-copilot](https://github.com/teamai-vault/teamai-cli-copilot) |
+| Start a department Marketplace from the reference template | [teamai-marketplace](https://github.com/teamai-vault/teamai-marketplace) |
+| See the architecture, file layout, and command examples at a glance | [Docs site](https://teamai-vault.github.io/teamai-cli-copilot/) |
 
 ### How it fits
 
 ```text
-teamai-marketplace
-  shared Common / Role / Product capabilities
-              ↓ native Copilot Marketplace + Agent Plugins
-team-ai CLI
-  bootstrap · sync · role · status · doctor
-              ↓
-your business repository
-  project-specific .github/* customization
+teamai-marketplace (department-owned, one per department)
+  main               plugins/  instructions/  skills/  manifest/projects.yaml  contexts/
+  teamai-learnings   learnings/<project|shared>/<uuid>.md
+        │ read                                        ▲ learning share / skill contribute
+        ▼                                             │ isolated worktree → pull request
+teamai CLI ─────────────────────────────────────────────┘
+  init · projects set · sync · recall · status · doctor
+        │                                   │
+        ▼                                   ▼
+your machine (~/.copilot)             your business repository
+  common + 1 role Plugin enabled        .github/instructions/teamai/<id>/
+  instructions/teamai/                  .teamai/context/   (docs, Learnings)
+  skills/teamai/, teamai-recall Agent   project Plugin components, when declared
 ```
 
-Shared capabilities live in the Marketplace. Project-specific behavior stays with the business repository. `team-ai` connects the two while managing only the state it owns.
+Plugins are installed and enabled through native Copilot commands, with a VS Code fallback when the Copilot CLI is absent. Everything else is mirrored into paths Team AI owns, with an ownership record for each write.
 
 ### Quick start
 
-Requirements: Node.js 20+, Git, and the GitHub Copilot CLI.
+Requirements: Node.js 20+, Git, and the GitHub Copilot CLI (VS Code works as a fallback for Plugin convergence).
 
-```text
-git clone https://github.com/teamai-vault/teamai-cli-customization.git
-cd teamai-cli-customization
-npm install
-npm run build
-npm link
-team-ai init --role api
+```bash
+git clone https://github.com/teamai-vault/teamai-cli-copilot.git
+cd teamai-cli-copilot
+npm install && npm run build && npm link
+
+teamai init --marketplace teamai-vault/teamai-marketplace --role api   # once per machine
+cd <your-business-repo>
+teamai projects set <logical-project-id>                               # once per repository
+teamai sync                                                            # whenever the team updates
+teamai recall payment retry                                            # search team knowledge locally
 ```
 
-### Capability tracks
+Use your own department's Marketplace in place of `teamai-vault/teamai-marketplace`. Every write command accepts `--dry-run`.
 
-- **Common** — shared capabilities used across roles
-- **API** — backend and API development
-- **iOS** — iOS development
-- **Android** — Android development
-- **QA** — quality and test workflows
-- **Design** — product and experience design
+### What a Marketplace carries
 
-Product capabilities are added when a real cross-project use case exists.
+- **Common Plugin**: capabilities shared by every role.
+- **Role Plugins**: `api`, `ios`, `aos` (Android), `qa`, `design`. All are installed; only `common` plus the selected role are enabled.
+- **Instructions**: department-wide `*.instructions.md`, mirrored to `~/.copilot/instructions/teamai/`.
+- **Team Skills**: standalone Skills governed by `skills.yaml`, installed on demand by name or tag.
+- **Logical Projects**: business context in `contexts/<id>/`, bound to a repository with `teamai projects set`, optionally with a `kind: project` Plugin as a component source.
+- **Learnings**: troubleshooting notes published through pull requests to the `teamai-learnings` branch and searchable with `teamai recall` or the bundled `teamai-recall` Agent.
 
 ### Principles
 
-- **Native first** — compose with GitHub Copilot's existing CLI, Marketplace, and Agent Plugin surfaces.
-- **Git-native** — shared capabilities are versioned in Git; project customization stays next to the code it serves.
-- **Explicit ownership** — automation changes only the resources it installed or owns.
-- **Small by default** — prefer a clear boundary over a clever overlay or another runtime.
+- **Native first**: compose with GitHub Copilot's existing CLI, Marketplace, and Agent Plugin surfaces.
+- **Git-native**: shared capabilities and Learnings are versioned and reviewed in Git; project context stays next to the code it serves.
+- **Explicit ownership**: automation changes only what it installed or recorded as owned, and refuses occupied paths.
+- **Small by default**: prefer a clear boundary over a clever overlay or another runtime.
 
 ### Learn and contribute
 
-- [CLI documentation](https://github.com/teamai-vault/teamai-cli-customization#readme) · [中文文档](https://github.com/teamai-vault/teamai-cli-customization/blob/main/README.zh-CN.md)
-- [Marketplace Plugin Guide](https://github.com/teamai-vault/teamai-marketplace/blob/main/docs/PLUGIN-GUIDE.md) · [中文说明](https://github.com/teamai-vault/teamai-marketplace/blob/main/README.zh-CN.md)
-- For questions or changes, use the issue tracker and contribution guidance in the repository most closely related to the topic.
+- [CLI README](https://github.com/teamai-vault/teamai-cli-copilot#readme) · [中文文档](https://github.com/teamai-vault/teamai-cli-copilot/blob/main/README.zh-CN.md) · [Docs site](https://teamai-vault.github.io/teamai-cli-copilot/)
+- [Marketplace README](https://github.com/teamai-vault/teamai-marketplace#readme) · [Plugin Guide](https://github.com/teamai-vault/teamai-marketplace/blob/main/docs/PLUGIN-GUIDE.md) · [Contributing](https://github.com/teamai-vault/teamai-marketplace/blob/main/docs/CONTRIBUTING.md)
+- For questions or changes, open an issue in the repository closest to the topic and follow its contribution guidance.
 
 <a href="#team-ai">Back to top</a> · <a href="#zh-cn">简体中文</a>
 
@@ -82,65 +92,74 @@ Product capabilities are added when a real cross-project use case exists.
 
 ## 简体中文
 
-Team AI 是面向团队的 Git-native 工具，用于让 GitHub Copilot 能力变得一致、可复用、可诊断。它不引入第二套 Agent Runtime、自定义 Plugin 格式或 IDE 专属适配层，而是围绕 Copilot 原生能力提供轻量控制层。
+Team AI 是面向团队的 GitHub Copilot 轻量控制层。部门把共享的 Plugin、Instructions、Skill、业务上下文和团队经验（Learnings）放在一个 Git Marketplace 里，`teamai` CLI 负责把它们收敛到每位工程师的机器和业务仓库。它不引入第二套 Agent Runtime、自定义 Plugin 格式或 IDE 专属适配层。
 
 ### 从这里开始
 
 | 目标 | 仓库 |
 | --- | --- |
-| 初始化机器、选择 Role、同步共享 Plugin、诊断状态 | [teamai-cli-customization](https://github.com/teamai-vault/teamai-cli-customization) |
-| 浏览并验证可复用的 Copilot Agent Plugin | [teamai-marketplace](https://github.com/teamai-vault/teamai-marketplace) |
+| 安装 `teamai` CLI：初始化、绑定仓库、同步、召回、贡献、诊断 | [teamai-cli-copilot](https://github.com/teamai-vault/teamai-cli-copilot) |
+| 以参考模板创建部门自己的 Marketplace | [teamai-marketplace](https://github.com/teamai-vault/teamai-marketplace) |
+| 一页看懂架构、文件位置和命令示例 | [文档站](https://teamai-vault.github.io/teamai-cli-copilot/) |
 
 ### 它们如何协作
 
 ```text
-teamai-marketplace
-  共享 Common / Role / Product capabilities
-              ↓ Copilot 原生 Marketplace + Agent Plugin
-team-ai CLI
-  bootstrap · sync · role · status · doctor
-              ↓
-真实业务仓库
-  项目专属 .github/* customization
+teamai-marketplace（部门自有，每个部门一个）
+  main               plugins/  instructions/  skills/  manifest/projects.yaml  contexts/
+  teamai-learnings   learnings/<project|shared>/<uuid>.md
+        │ 读取                                        ▲ learning share / skill contribute
+        ▼                                             │ 隔离 worktree → Pull Request
+teamai CLI ─────────────────────────────────────────────┘
+  init · projects set · sync · recall · status · doctor
+        │                                   │
+        ▼                                   ▼
+你的机器（~/.copilot）                 你的业务仓库
+  启用 common + 1 个 role Plugin         .github/instructions/teamai/<id>/
+  instructions/teamai/                  .teamai/context/（Docs、Learnings）
+  skills/teamai/、teamai-recall Agent   Project Plugin 声明的组件（按需）
 ```
 
-共享能力放在 Marketplace 中；项目专属行为跟随真实业务仓库。`team-ai` 负责连接两者，并且只管理自己拥有的状态。
+Plugin 通过 Copilot 原生命令安装和启用，没有 Copilot CLI 时回退到 VS Code。其余内容镜像到 Team AI 自有的路径，每次写入都记录所有权。
 
 ### 快速开始
 
-环境要求：Node.js 20+、Git，以及 GitHub Copilot CLI。
+环境要求：Node.js 20+、Git，以及 GitHub Copilot CLI（Plugin 收敛也可回退到 VS Code）。
 
-```text
-git clone https://github.com/teamai-vault/teamai-cli-customization.git
-cd teamai-cli-customization
-npm install
-npm run build
-npm link
-team-ai init --role api
+```bash
+git clone https://github.com/teamai-vault/teamai-cli-copilot.git
+cd teamai-cli-copilot
+npm install && npm run build && npm link
+
+teamai init --marketplace teamai-vault/teamai-marketplace --role api   # 每台机器一次
+cd <your-business-repo>
+teamai projects set <logical-project-id>                               # 每个仓库一次
+teamai sync                                                            # 团队内容更新后
+teamai recall 支付 重试                                                 # 本地检索团队知识
 ```
 
-### 能力方向
+请把 `teamai-vault/teamai-marketplace` 换成你所在部门的 Marketplace。所有写命令都支持 `--dry-run`。
 
-- **Common** —— 跨 Role 共用的能力
-- **API** —— 后端与 API 开发
-- **iOS** —— iOS 开发
-- **Android** —— Android 开发
-- **QA** —— 质量与测试流程
-- **Design** —— 产品与体验设计
+### Marketplace 里有什么
 
-只有出现真实的跨项目场景时，才会增加 Product capabilities。
+- **Common Plugin**：所有 Role 共用的能力。
+- **Role Plugin**：`api`、`ios`、`aos`（Android）、`qa`、`design`。全部安装，只启用 `common` 和所选 Role。
+- **Instructions**：部门级 `*.instructions.md`，镜像到 `~/.copilot/instructions/teamai/`。
+- **Team Skills**：由 `skills.yaml` 治理的 standalone Skill，按名字或 Tag 按需安装。
+- **Logical Project**：`contexts/<id>/` 中的业务上下文，用 `teamai projects set` 绑定到仓库，可选用 `kind: project` 的 Plugin 作为组件来源。
+- **Learnings**：排障与踩坑记录，经 Pull Request 发布到 `teamai-learnings` 分支，可用 `teamai recall` 或内置的 `teamai-recall` Agent 检索。
 
 ### 原则
 
-- **优先使用原生能力** —— 组合 GitHub Copilot 已有的 CLI、Marketplace 和 Agent Plugin 能力。
-- **Git-native** —— 共享能力在 Git 中版本化；项目定制跟随它服务的代码。
-- **边界明确** —— 自动化只修改自己安装或拥有的资源。
-- **默认保持小巧** —— 优先清晰边界，不引入复杂 overlay 或另一套 runtime。
+- **优先使用原生能力**：组合 GitHub Copilot 已有的 CLI、Marketplace 和 Agent Plugin。
+- **Git-native**：共享能力和 Learnings 在 Git 中版本化并经过评审；项目上下文跟随它服务的代码。
+- **边界明确**：自动化只修改自己安装或记录为拥有的资源，路径被占用时直接拒绝。
+- **默认保持小巧**：优先清晰边界，不引入复杂 overlay 或另一套 runtime。
 
 ### 文档与参与
 
-- [CLI 中文文档](https://github.com/teamai-vault/teamai-cli-customization/blob/main/README.zh-CN.md) · [English](https://github.com/teamai-vault/teamai-cli-customization#readme)
-- [Marketplace 中文说明](https://github.com/teamai-vault/teamai-marketplace/blob/main/README.zh-CN.md) · [Plugin Guide](https://github.com/teamai-vault/teamai-marketplace/blob/main/docs/PLUGIN-GUIDE.md)
+- [CLI 中文文档](https://github.com/teamai-vault/teamai-cli-copilot/blob/main/README.zh-CN.md) · [English](https://github.com/teamai-vault/teamai-cli-copilot#readme) · [文档站](https://teamai-vault.github.io/teamai-cli-copilot/)
+- [Marketplace 中文说明](https://github.com/teamai-vault/teamai-marketplace/blob/main/README.zh-CN.md) · [Plugin Guide](https://github.com/teamai-vault/teamai-marketplace/blob/main/docs/PLUGIN-GUIDE.md) · [贡献指南](https://github.com/teamai-vault/teamai-marketplace/blob/main/docs/CONTRIBUTING.md)
 - 如有问题或改进建议，请在最相关的仓库中提交 Issue，并遵循该仓库的贡献说明。
 
 <a href="#team-ai">返回顶部</a> · <a href="#english">English</a>
